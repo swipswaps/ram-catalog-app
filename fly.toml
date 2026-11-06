@@ -1,5 +1,6 @@
 app = "ram-catalog-backend"
 primary_region = "iad"
+swap_size_mb = 1024
 
 [build]
   dockerfile = "Dockerfile.backend"
@@ -27,3 +28,6 @@ primary_region = "iad"
   grace_period = "30s"
   method = "GET"
   path = "/health"
+
+[deploy]
+  wait_timeout = "5m"
