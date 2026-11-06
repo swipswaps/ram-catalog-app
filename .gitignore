@@ -1,0 +1,13 @@
+node_modules/
+dist/
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.glb
+*.gltf
+*.step
+.env
+.env.*
+!.env.example
+.DS_Store

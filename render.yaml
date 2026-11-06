@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: ram-catalog-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile.backend
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: CORS_ORIGINS
+        value: https://swipswaps.github.io,http://localhost:5173
+      - key: DB_PATH
+        value: /app/ram_catalog.db
