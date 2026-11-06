@@ -8,11 +8,15 @@ _ocr_engine = None
 def init_ocr():
     global _ocr_engine
     if _ocr_engine is None:
-        _ocr_engine = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+        # PaddleOCR 2.7+ removed show_log and deprecated use_angle_cls.
+        # Use use_textline_orientation=True for angle classification.
+        # Ref: https://wenku.csdn.net/answer/3ek27u35ozs1
+        _ocr_engine = PaddleOCR(
+            use_textline_orientation=True,
+            lang='en',
+        )
 
 def _order_points(pts: np.ndarray) -> np.ndarray:
-    # Standard 4-point perspective ordering algorithm.
-    # Ref: https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
     rect = np.zeros((4, 2), dtype="float32")
     s = pts.sum(axis=1)
     rect[0] = pts[np.argmin(s)]
@@ -33,9 +37,8 @@ def process_ram_image(image_bytes: bytes) -> List[Dict[str, Any]]:
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     rectified = img
     if contours:
-        # Find the largest 4-point contour (the RAM board) and warp it.
-        # Ref: https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
-        approx = cv2.approxPolyDP(max(contours, key=cv2.contourArea), 0.02 * cv2.arcLength(max(contours, key=cv2.contourArea), True), True)
+        largest = max(contours, key=cv2.contourArea)
+        approx = cv2.approxPolyDP(largest, 0.02 * cv2.arcLength(largest, True), True)
         if len(approx) == 4:
             rect = _order_points(approx.reshape(4, 2))
             (tl, tr, br, bl) = rect
@@ -44,30 +47,17 @@ def process_ram_image(image_bytes: bytes) -> List[Dict[str, Any]]:
             dst = np.array([[0,0],[maxW-1,0],[maxW-1,maxH-1],[0,maxH-1]], dtype="float32")
             rectified = cv2.warpPerspective(img, cv2.getPerspectiveTransform(rect, dst), (maxW, maxH))
 
-    # PaddleOCR v2.7.3 returns a list of [box, (text, confidence)].
-    # We pass cls=True for compatibility; newer versions ignore it.
-    # Ref: https://github.com/PaddlePaddle/PaddleOCR/issues/11555
-    try:
-        result = _ocr_engine.ocr(rectified, cls=True)
-    except TypeError:
-        result = _ocr_engine.ocr(rectified)
+    # PaddleOCR 2.7.3 accepts cls parameter but ignores it; angle is handled at init.
+    result = _ocr_engine.ocr(rectified, cls=True)
 
     results = []
     if result and result[0]:
-        if isinstance(result[0], dict):
-            # PaddleOCR v3.x returns a dict with rec_texts, rec_scores, rec_boxes.
-            for text, score, box in zip(result[0].get("rec_texts", []), result[0].get("rec_scores", []), result[0].get("rec_boxes", [])):
-                if float(score) >= 0.6:
-                    clean = "".join(c for c in text if c.isalnum() or c in ["-", " ", ":"])
-                    if len(clean) >= 4:
-                        results.append({"bbox": [int(box[0]), int(box[1]), int(box[2]-box[0]), int(box[3]-box[1])], "extracted_text": clean})
-        else:
-            # PaddleOCR v2.x returns a list of [box, (text, confidence)].
-            for line in result[0]:
-                box, (text, conf) = line
-                if conf >= 0.6:
-                    clean = "".join(c for c in text if c.isalnum() or c in ["-", " ", ":"])
-                    if len(clean) >= 4:
-                        xs, ys = [pt[0] for pt in box], [pt[1] for pt in box]
-                        results.append({"bbox": [int(min(xs)), int(min(ys)), int(max(xs)-min(xs)), int(max(ys)-min(ys))], "extracted_text": clean})
+        # 2.x return shape: list of [box, (text, confidence)]
+        for line in result[0]:
+            box, (text, conf) = line
+            if conf >= 0.6:
+                clean = "".join(c for c in text if c.isalnum() or c in ["-", " ", ":"])
+                if len(clean) >= 4:
+                    xs, ys = [pt[0] for pt in box], [pt[1] for pt in box]
+                    results.append({"bbox": [int(min(xs)), int(min(ys)), int(max(xs)-min(xs)), int(max(ys)-min(ys))], "extracted_text": clean})
     return results

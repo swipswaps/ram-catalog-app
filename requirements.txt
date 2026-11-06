@@ -6,6 +6,6 @@ python-multipart==0.0.10
 faiss-cpu==1.9.0
 sentence-transformers==3.1.1
 cadquery==2.4.0
-paddlepaddle==2.6.1
+paddlepaddle==2.6.2
 paddleocr==2.7.3
-opencv-contrib-python-headless==4.9.0.80
+opencv-contrib-python-headless==4.6.0.66
