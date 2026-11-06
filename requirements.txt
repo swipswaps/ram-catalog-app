@@ -1,10 +1,11 @@
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
-opencv-python-headless==4.10.0.84
-pytesseract==0.3.13
 numpy==1.26.4
 pydantic==2.9.2
 python-multipart==0.0.10
 faiss-cpu==1.9.0
 sentence-transformers==3.1.1
 cadquery==2.4.0
+paddlepaddle==2.6.1
+paddleocr==2.7.3
+opencv-contrib-python-headless==4.9.0.80
