@@ -1,5 +1,4 @@
 import os, struct, cadquery as cq
-MAX_GLB_BYTES = 25 * 1024 * 1024
 
 def generate_ram_cad_model(module_type="DDR4", ic_count=8, form_factor="DIMM") -> str:
     os.makedirs("/app/static/cad", exist_ok=True)
@@ -17,4 +16,11 @@ def generate_ram_cad_model(module_type="DDR4", ic_count=8, form_factor="DIMM") -
             assy.add(cq.Workplane("XY").box(*IC).translate((-L/2 + (i+1)*sp, Y, z*(T/2+IC[2]/2))), name=f"IC_{r}_{i}", color=cq.Color(0.02, 0.02, 0.02))
     path = f"/app/static/cad/{form_factor.lower()}_{module_type.lower()}.glb"
     assy.save(path, exportType="GLB", tolerance=0.2, angularTolerance=0.2)
+    
+    # Gate: Ensure CadQuery successfully wrote the GLB file.
+    # Explanation: CadQuery fails silently on certain export errors.
+    # Ref: https://github.com/CadQuery/cadquery/issues/1420
+    assert os.path.exists(path), f"GLB file not created at {path}"
+    assert os.path.getsize(path) > 0, f"GLB file is empty at {path}"
+    
     return f"/static/cad/{form_factor.lower()}_{module_type.lower()}.glb"
