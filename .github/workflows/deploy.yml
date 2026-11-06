@@ -21,7 +21,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
-          cache: 'npm'
 
       - name: Install dependencies
         env:
@@ -29,21 +28,7 @@ jobs:
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-      - name: Check branch protection
-        id: prot
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if gh api "repos/${{ github.repository }}/branches/${{ github.event.repository.default_branch }}/protection" > /tmp/prot.out 2>&1; then
-            echo "protected=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "protected=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Commit lockfile if unprotected
-        if: steps.prot.outputs.protected == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit lockfile if generated and branch is unprotected
         run: |
           if [ -f package-lock.json ]; then
             git config user.name "github-actions[bot]"
@@ -54,6 +39,8 @@ jobs:
               git push
             fi
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         env:
