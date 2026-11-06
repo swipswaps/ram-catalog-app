@@ -1,5 +1,4 @@
 import json, os, sqlite3
-from contextlib import contextmanager
 DB_FILE = os.environ.get("DB_PATH", "ram_catalog.db")
 def init_db():
     with sqlite3.connect(DB_FILE, check_same_thread=False) as c:

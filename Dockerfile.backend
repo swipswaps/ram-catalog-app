@@ -1,14 +1,15 @@
 FROM python:3.10-slim
 
 WORKDIR /app
+
+# libgomp1 is required for PaddlePaddle's OpenMP backend.
+# Ref: https://github.com/PaddlePaddle/Paddle/issues/57204
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libgomp1 libsm6 libxext6 libxrender1 curl build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-# Install Paddle first to cache the heavy layer (~500MB wheel)
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir paddlepaddle==2.6.1 && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./backend/

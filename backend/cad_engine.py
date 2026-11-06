@@ -1,5 +1,6 @@
 import os, struct, cadquery as cq
 MAX_GLB_BYTES = 25 * 1024 * 1024
+
 def generate_ram_cad_model(module_type="DDR4", ic_count=8, form_factor="DIMM") -> str:
     os.makedirs("/app/static/cad", exist_ok=True)
     dims = (67.6, 30.0, 1.0, 4.0, 16.0, (8.0, 8.0, 1.0), 0.0) if form_factor == "SODIMM" else (133.35, 31.25, 1.57, 5.0, 40.0, (11.0, 9.0, 1.2), 2.0)

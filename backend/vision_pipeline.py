@@ -8,8 +8,8 @@ _ocr_engine = None
 def init_ocr():
     global _ocr_engine
     if _ocr_engine is None:
-        # PaddleOCR 2.7+ removed show_log and deprecated use_angle_cls.
-        # Use use_textline_orientation=True for angle classification.
+        # use_textline_orientation replaces the deprecated use_angle_cls.
+        # show_log was removed in PaddleOCR 2.7+.
         # Ref: https://wenku.csdn.net/answer/3ek27u35ozs1
         _ocr_engine = PaddleOCR(
             use_textline_orientation=True,
@@ -17,6 +17,8 @@ def init_ocr():
         )
 
 def _order_points(pts: np.ndarray) -> np.ndarray:
+    # Standard 4-point perspective ordering.
+    # Ref: https://pyimagesearch.com/2014/08/25/4-point-opencv-getperspective-transform-example/
     rect = np.zeros((4, 2), dtype="float32")
     s = pts.sum(axis=1)
     rect[0] = pts[np.argmin(s)]
@@ -47,12 +49,11 @@ def process_ram_image(image_bytes: bytes) -> List[Dict[str, Any]]:
             dst = np.array([[0,0],[maxW-1,0],[maxW-1,maxH-1],[0,maxH-1]], dtype="float32")
             rectified = cv2.warpPerspective(img, cv2.getPerspectiveTransform(rect, dst), (maxW, maxH))
 
-    # PaddleOCR 2.7.3 accepts cls parameter but ignores it; angle is handled at init.
+    # PaddleOCR 2.7.3 returns a list of [box, (text, confidence)].
     result = _ocr_engine.ocr(rectified, cls=True)
 
     results = []
     if result and result[0]:
-        # 2.x return shape: list of [box, (text, confidence)]
         for line in result[0]:
             box, (text, conf) = line
             if conf >= 0.6:
