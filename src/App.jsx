@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import CadViewer from './components/CadViewer.jsx';
 import './styles.css';
 
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = 'http://localhost:8080';
 
 export default function App() {
   const [file, setFile] = useState(null);
