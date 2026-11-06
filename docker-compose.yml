@@ -8,19 +8,12 @@ services:
       - "8000:8000"
     environment:
       - PORT=8000
-      - LOG_LEVEL=info
-      - CORS_ORIGINS=https://swipswaps.github.io,http://localhost:5173
+      - CORS_ORIGINS=https://swipswaps.github.io,http://localhost:5173,http://localhost:4173
       - DB_PATH=/app/ram_catalog.db
     volumes:
       - cad_data:/app/static/cad
       - db_data:/app
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      start_period: 15s
-      retries: 3
 
 volumes:
   cad_data:
